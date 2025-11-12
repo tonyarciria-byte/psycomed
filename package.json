@@ -1,0 +1,62 @@
+{
+      "name": "psicomed",
+      "version": "1.0.0",
+      "description": "Una aplicación moderna para el seguimiento del estado de ánimo, bienestar mental y autocuidado",
+      "author": "PsicoMed Team",
+      "license": "MIT",
+      "keywords": ["react", "mood-tracker", "mental-health", "wellness", "tailwind", "chartjs"],
+      "homepage": "https://github.com/tu-usuario/psicomed#readme",
+      "repository": {
+            "type": "git",
+            "url": "https://github.com/tu-usuario/psicomed.git"
+      },
+      "bugs": {
+            "url": "https://github.com/tu-usuario/psicomed/issues"
+      },
+      "scripts": {
+            "start": "react-scripts start",
+            "build": "react-scripts build",
+            "test": "react-scripts test",
+            "eject": "react-scripts eject"
+      },
+      "dependencies": {
+            "autoprefixer": "^10.0.0",
+            "axios": "^1.6.2",
+            "chart.js": "^4.5.0",
+            "crypto-js": "^4.2.0",
+            "framer-motion": "^12.23.13",
+            "i18next": "^23.7.6",
+            "i18next-browser-languagedetector": "^7.2.0",
+            "i18next-http-backend": "^2.4.2",
+            "lucide-react": "^0.544.0",
+            "postcss": "^8",
+            "puppeteer": "^21.6.1",
+            "quill": "^2.0.3",
+            "react": "^18.0.0",
+            "react-chartjs-2": "^5.3.0",
+            "react-dom": "^18.0.0",
+            "react-i18next": "^13.5.0",
+            "react-markdown": "^10.1.0",
+            "react-quill": "^2.0.0",
+            "react-router-dom": "^7.9.1",
+            "react-scripts": "^5.0.1",
+            "react-spring": "^9.7.3",
+            "sentiment": "^5.0.2",
+            "tailwind-merge": "^2.4.0",
+            "tailwindcss": "^3.4.1",
+            "tailwindcss-animate": "^1.0.7"
+      },
+      "main": "/index.js",
+      "browserslist": {
+            "production": [
+                  ">0.2%",
+                  "not dead",
+                  "not op_mini all"
+            ],
+            "development": [
+                  "last 1 chrome version",
+                  "last 1 firefox version",
+                  "last 1 safari version"
+            ]
+      }
+}

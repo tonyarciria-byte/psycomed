@@ -1,0 +1,264 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Global theme variables */
+:root {
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F8FAFC;
+  --text-primary: #1F2937;
+  --text-secondary: #6B7280;
+  --border-color: #E5E7EB;
+  --color-primary: #3B82F6;
+  --color-secondary: #8B5CF6;
+  --color-background: #FFFFFF;
+  --color-surface: #F8FAFC;
+  --color-text: #1F2937;
+  --color-textSecondary: #6B7280;
+  --color-border: #E5E7EB;
+  --color-accent: #10B981;
+  --color-error: #EF4444;
+  --color-warning: #F59E0B;
+  --color-success: #10B981;
+}
+
+/* Dark theme variables */
+.dark {
+  --bg-primary: #111827;
+  --bg-secondary: #1F2937;
+  --text-primary: #F9FAFB;
+  --text-secondary: #9CA3AF;
+  --border-color: #374151;
+  --color-primary: #60A5FA;
+  --color-secondary: #A78BFA;
+  --color-background: #111827;
+  --color-surface: #1F2937;
+  --color-text: #F9FAFB;
+  --color-textSecondary: #9CA3AF;
+  --color-border: #374151;
+  --color-accent: #34D399;
+  --color-error: #F87171;
+  --color-warning: #FBBF24;
+  --color-success: #34D399;
+}
+
+/* Global styles for theme application */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+/* Light theme - use Tailwind defaults, no overrides needed */
+
+/* Dark theme overrides - only apply when dark class is present */
+.dark body {
+  background-color: #111827;
+  color: #f3f4f6;
+}
+
+.dark .bg-white {
+  background-color: #1f2937;
+}
+
+.dark .bg-gray-50 {
+  background-color: #1f2937;
+}
+
+.dark .bg-gray-100 {
+  background-color: #374151;
+}
+
+.dark .bg-gray-200 {
+  background-color: #4b5563;
+}
+
+.dark .bg-gray-300 {
+  background-color: #6b7280;
+}
+
+.dark .bg-gray-400 {
+  background-color: #9ca3af;
+}
+
+.dark .bg-gray-500 {
+  background-color: #d1d5db;
+}
+
+.dark .bg-gray-600 {
+  background-color: #e5e7eb;
+}
+
+.dark .bg-gray-700 {
+  background-color: #f3f4f6;
+}
+
+.dark .bg-gray-800 {
+  background-color: #f9fafb;
+}
+
+.dark .bg-gray-900 {
+  background-color: #000000;
+}
+
+.dark .text-white {
+  color: #f3f4f6;
+}
+
+.dark .text-gray-50 {
+  color: #e5e7eb;
+}
+
+.dark .text-gray-100 {
+  color: #d1d5db;
+}
+
+.dark .text-gray-200 {
+  color: #9ca3af;
+}
+
+.dark .text-gray-300 {
+  color: #6b7280;
+}
+
+.dark .text-gray-400 {
+  color: #4b5563;
+}
+
+.dark .text-gray-500 {
+  color: #374151;
+}
+
+.dark .text-gray-600 {
+  color: #1f2937;
+}
+
+.dark .text-gray-700 {
+  color: #111827;
+}
+
+.dark .text-gray-800 {
+  color: #000000;
+}
+
+.dark .text-gray-900 {
+  color: #000000;
+}
+
+.dark .border-gray-100 {
+  border-color: #374151;
+}
+
+.dark .border-gray-200 {
+  border-color: #4b5563;
+}
+
+.dark .border-gray-300 {
+  border-color: #6b7280;
+}
+
+.dark .border-gray-400 {
+  border-color: #9ca3af;
+}
+
+.dark .border-gray-500 {
+  border-color: #d1d5db;
+}
+
+.dark .border-gray-600 {
+  border-color: #e5e7eb;
+}
+
+.dark .border-gray-700 {
+  border-color: #f3f4f6;
+}
+
+.dark .border-gray-800 {
+  border-color: #f9fafb;
+}
+
+.dark .border-gray-900 {
+  border-color: #ffffff;
+}
+
+/* Form elements in dark mode */
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: #1f2937;
+  border-color: #4b5563;
+  color: #f3f4f6;
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 1px #3b82f6;
+}
+
+/* Gradients in dark mode */
+.dark .bg-gradient-to-r {
+  background: linear-gradient(to right, #3B82F6, #8B5CF6);
+}
+
+.dark .bg-gradient-to-br {
+  background: linear-gradient(to bottom right, #3B82F6, #8B5CF6);
+}
+
+.dark .from-blue-50 {
+  --tw-gradient-from: #1e293b;
+}
+
+.dark .to-indigo-100 {
+  --tw-gradient-to: #0f172a;
+}
+
+.dark .from-gray-900 {
+  --tw-gradient-from: #000000;
+}
+
+.dark .to-gray-800 {
+  --tw-gradient-to: #1f2937;
+}
+
+/* Custom theme classes */
+.theme-bg-primary {
+  background-color: var(--bg-primary);
+}
+
+.theme-bg-secondary {
+  background-color: var(--bg-secondary);
+}
+
+.theme-text-primary {
+  color: var(--text-primary);
+}
+
+.theme-text-secondary {
+  color: var(--text-secondary);
+}
+
+.theme-border {
+  border-color: var(--border-color);
+}
+
+/* Force complete dark theme coverage - REMOVED to allow proper dark mode classes */
+/* The aggressive rules were causing issues with theme switching */
+/* .dark * {
+  --tw-bg-opacity: 1;
+  --tw-text-opacity: 1;
+  --tw-border-opacity: 1;
+} */
+
+/* Override any remaining light backgrounds in dark mode - REMOVED */
+/* .dark {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary) !important;
+} */
+
+/* Form elements will be handled by React component classes */
+
+/* Ensure all cards and surfaces are dark - REMOVED */
+/* Shadow elements will be handled by React component classes */
+
+/* Force all gradients to use theme colors - REMOVED */
+/* Gradients will be handled by React component classes */

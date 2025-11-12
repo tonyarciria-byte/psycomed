@@ -255,4 +255,8 @@ Esta aplicación es una herramienta de apoyo al bienestar mental y NO sustituye 
 
 ---
 
+<<<<<<< HEAD
 ![Made with ❤️](https://img.shields.io/badge/Made%20with-%E2%9D%A4%EF%B8%8F-red?style=for-the-badge)
+=======
+![Made with ❤️](https://img.shields.io/badge/Made%20with-%E2%9D%A4%EF%B8%8F-red?style=for-the-badge)
+>>>>>>> cd553fe (Initial commit: PsicoMed - Aplicación de seguimiento del estado de ánimo)
