@@ -10,6 +10,14 @@ const firebaseConfig = {
   appId: process.env.REACT_APP_FIREBASE_APP_ID
 };
 
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const googleProvider = new GoogleAuthProvider();
+// Only initialize Firebase if API key is provided
+let app, auth, googleProvider;
+if (firebaseConfig.apiKey && firebaseConfig.apiKey !== 'tu-api-key-de-firebase') {
+  app = initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  googleProvider = new GoogleAuthProvider();
+} else {
+  console.warn('Firebase no configurado. Las funciones de autenticación no estarán disponibles.');
+}
+
+export { auth, googleProvider };

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Lock, User, Calendar, MapPin, Stethoscope, Globe, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, User, Calendar, MapPin, Stethoscope, Globe, Eye, EyeOff, AlertTriangle } from 'lucide-react';
 import { auth, googleProvider } from '../firebase';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
@@ -22,6 +22,32 @@ const WSRegister = ({ setUserProfile }) => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Check if Firebase is configured
+  if (!auth) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center"
+      >
+        <AlertTriangle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+        <h2 className="text-xl font-bold text-gray-900 mb-4">Configuración Requerida</h2>
+        <p className="text-gray-600 mb-6">
+          Para usar las funciones de registro e inicio de sesión, necesitas configurar Firebase.
+          Agrega tus credenciales de Firebase en el archivo .env.local.
+        </p>
+        <motion.button
+          onClick={() => navigate('/dashboard')}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
+        >
+          Continuar sin autenticación
+        </motion.button>
+      </motion.div>
+    );
+  }
 
   const handleInputChange = (e) => {
     setFormData({
