@@ -5,14 +5,6 @@
       "author": "PsicoMed Team",
       "license": "MIT",
       "keywords": ["react", "mood-tracker", "mental-health", "wellness", "tailwind", "chartjs"],
-      "homepage": "https://github.com/tu-usuario/psicomed#readme",
-      "repository": {
-            "type": "git",
-            "url": "https://github.com/tu-usuario/psicomed.git"
-      },
-      "bugs": {
-            "url": "https://github.com/tu-usuario/psicomed/issues"
-      },
       "scripts": {
             "start": "react-scripts start",
             "build": "react-scripts build",

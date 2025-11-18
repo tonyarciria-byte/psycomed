@@ -42,16 +42,6 @@ const TopNavigation = () => {
         </motion.button>
       </Link>
 
-      <Link to="/premium">
-        <motion.button
-          whileHover={{ scale: 1.1 }}
-          whileTap={{ scale: 0.9 }}
-          className="p-3 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 text-white shadow-md"
-        >
-          <Crown className="w-6 h-6" />
-        </motion.button>
-      </Link>
-
       <Link to="/medications">
         <motion.button
           whileHover={{ scale: 1.1 }}

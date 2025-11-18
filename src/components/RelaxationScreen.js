@@ -77,13 +77,17 @@ const RelaxationScreen = ({ userProfile }) => {
     };
   }, [isPlaying, currentSound, currentSoundIndex, allSounds, isShuffle, isRepeat]);
 
-  const handlePlayPause = (sound, index) => {
+  const handlePlayPause = async (sound, index) => {
     if (currentSound && currentSound.id === sound.id) {
       const audio = audioRef.current;
       if (isPlaying) {
         audio.pause();
       } else {
-        audio.play();
+        try {
+          await audio.play();
+        } catch (error) {
+          console.error('Error playing audio:', error);
+        }
       }
       setIsPlaying(!isPlaying);
     } else {
@@ -91,9 +95,15 @@ const RelaxationScreen = ({ userProfile }) => {
       setCurrentSoundIndex(index);
       setIsPlaying(true);
       if (audioRef.current) {
-        audioRef.current.src = sound.url;
-        audioRef.current.load();
-        audioRef.current.play();
+        const audio = audioRef.current;
+        audio.pause();
+        audio.src = sound.url;
+        audio.load();
+        try {
+          await audio.play();
+        } catch (error) {
+          console.error('Error playing audio:', error);
+        }
       }
     }
   };
@@ -136,8 +146,12 @@ const RelaxationScreen = ({ userProfile }) => {
 
   const playClick = () => {
     if (clickAudioRef.current) {
-      clickAudioRef.current.currentTime = 0;
-      clickAudioRef.current.play();
+      try {
+        clickAudioRef.current.currentTime = 0;
+        clickAudioRef.current.play();
+      } catch (error) {
+        console.error('Error playing click sound:', error);
+      }
     }
   };
 
@@ -169,28 +183,28 @@ const RelaxationScreen = ({ userProfile }) => {
   const SoundItem = ({ sound, index, isCurrent, isPlaying, disabled = false }) => (
     <motion.div
       whileHover={{ scale: 1.02, backgroundColor: '#f9fafb' }}
-      className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer w-full max-w-sm transition-all duration-200 ${isCurrent ? 'border-green-400 bg-green-50 dark:bg-green-900/20' : 'border-gray-200  bg-white hover:border-gray-300 dark:hover:border-gray-500'}`}
+      className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer w-full max-w-md transition-all duration-200 ${isCurrent ? 'border-green-400 bg-green-50 dark:bg-green-900/20' : 'border-gray-200  bg-white hover:border-gray-300 dark:hover:border-gray-500'}`}
     >
       <div className="flex items-center gap-3">
         <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${sound.color || 'from-gray-300 to-gray-400'} flex items-center justify-center`}>
           <Music className="w-6 h-6 text-white" />
         </div>
         <div>
-          <p className="font-semibold text-gray-900www ">{sound.name}</p>
-          <p className="text-xs text-gray-500ww ">{sound.type}</p>
+          <p className="font-semibold text-gray-900w ">{sound.name}</p>
+          <p className="text-xs text-gray-500w ">{sound.type}</p>
         </div>
       </div>
       <div className="flex items-center gap-2">
-        {sound.isPublic ? <Globe className="w-4 h-4 text-green-600" /> : <Lock className="w-4 h-4 text-gray-500ww " />}
+        {sound.isPublic ? <Globe className="w-4 h-4 text-green-600" /> : <Lock className="w-4 h-4 text-gray-500w " />}
         <motion.button onClick={() => { if (!disabled) { playClick(); handlePlayPause(sound, index); } }} whileTap={{ scale: disabled ? 1 : 0.98 }} className={disabled ? 'cursor-not-allowed' : ''}>
-          {isCurrent && isPlaying ? <Pause className="w-5 h-5 text-green-600" /> : <Play className="w-5 h-5 text-gray-500ww " />}
+          {isCurrent && isPlaying ? <Pause className="w-5 h-5 text-green-600" /> : <Play className="w-5 h-5 text-gray-500w " />}
         </motion.button>
       </div>
     </motion.div>
   );
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100  text-gray-900www  p-4 relative overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-blue-50 to-indigo-100  text-gray-900w  p-4 relative overflow-hidden">
       {/* TopNavigation centrado */}
       <div className="flex justify-center items-center mb-6">
         <TopNavigation />
@@ -200,17 +214,17 @@ const RelaxationScreen = ({ userProfile }) => {
           initial={{ opacity: 0, y: -50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="bg-gradient-to-b from-gray-50w to-gray-500w  rounded-3xl shadow-xl p-8 max-w-3xl w-full border border-gray-200  text-center"
+          className="bg-gray-100 from-gray-50w to-gray-500w  rounded-3xl shadow-xl p-8 max-w-3xl w-full border border-gray-200  text-center"
         >
           <Music className="w-16 h-16 text-green-500 mx-auto mb-6 animate-pulse" />
-          <h2 className="text-3xl font-bold mb-4 text-gray-800ww ">Relajación y Sonidos</h2>
-          <p className="text-gray-600ww  mb-6">Escucha sonidos o crea tu playlist como un pro.</p>
+          <h2 className="text-3xl font-bold mb-4 text-gray-800w ">Relajación y Sonidos</h2>
+          <p className="text-gray-600w  mb-6">Escucha sonidos o crea tu playlist como un pro.</p>
 
           {/* Controles principales arriba */}
           <div className="mb-8">
-            <h3 className="text-xl font-semibold mb-3 text-gray-800ww ">Reproduciendo: {currentSound ? currentSound.name : 'Selecciona un sonido'}</h3>
+            <h3 className="text-xl font-semibold mb-3 text-gray-800w ">Reproduciendo: {currentSound ? currentSound.name : 'Selecciona un sonido'}</h3>
             <audio ref={audioRef} preload="auto" className="hidden" />
-            <audio ref={clickAudioRef} src="https://www.soundjay.com/misc/sounds/button-1.mp3" preload="auto" className="hidden" />
+            <audio ref={clickAudioRef} src="https://www.soundjay.com/buttons/sounds/button-30.mp3" preload="auto" className="hidden" />
           </div>
 
           {/* Playlists secciones con scroll */}
@@ -220,7 +234,7 @@ const RelaxationScreen = ({ userProfile }) => {
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 justify-items-center">
               {defaultSounds.map((sound, index) => {
-                const isPremiumSound = index > 0; // Solo el primero es free
+                const isPremiumSound = false; // Todos libres
                 const isLocked = isPremiumSound && !userProfile?.isPremium;
                 return (
                   <div key={sound.id} className="relative">
@@ -258,7 +272,7 @@ const RelaxationScreen = ({ userProfile }) => {
                 {playlist.map((sound, index) => (
                   <SoundItem key={sound.id} sound={sound} index={defaultSounds.length + index} isCurrent={currentSound?.id === sound.id} isPlaying={isPlaying} />
                 ))}
-                {playlist.length === 0 && <p className="text-gray-400ww  italic col-span-full text-center">Añade tus vibes aquí.</p>}
+                {playlist.length === 0 && <p className="text-gray-400w  italic col-span-full text-center">Añade tus vibes aquí.</p>}
               </div>
             )}
           </div>
@@ -273,14 +287,14 @@ const RelaxationScreen = ({ userProfile }) => {
               placeholder="Nombre del sonido"
               value={newSoundName}
               onChange={(e) => setNewSoundName(e.target.value)}
-              className="w-full mb-3 p-3 bg-white border border-gray-300  rounded-lg text-gray-900www  placeholder-gray-500 dark:placeholder-gray-400"
+              className="w-full mb-3 p-3 bg-white border border-gray-300  rounded-lg text-gray-900w  placeholder-gray-500 dark:placeholder-gray-400"
             />
             <div className="grid grid-cols-1 gap-3 mb-3">
               <input
                 type="file"
                 accept="audio/*"
                 onChange={handleFileSelect}
-                className="w-full p-3 bg-white border border-gray-300  rounded-lg text-gray-900www  file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-500 file:text-white hover:file:bg-green-600"
+                className="w-full p-3 bg-white border border-gray-300  rounded-lg text-gray-900w  file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-500 file:text-white hover:file:bg-green-600"
               />
               {filePreviewUrl && (
                 <audio controls src={filePreviewUrl} className="w-full mt-2" />
@@ -288,7 +302,7 @@ const RelaxationScreen = ({ userProfile }) => {
             </div>
             <div className="flex items-center gap-2 mb-4 justify-center">
               <input type="checkbox" id="isPublic" checked={isPublic} onChange={(e) => setIsPublic(e.target.checked)} className="rounded" />
-              <label htmlFor="isPublic" className="text-sm text-gray-700ww ">Hacer público</label>
+              <label htmlFor="isPublic" className="text-sm text-gray-700w ">Hacer público</label>
             </div>
             <div className="flex gap-3 justify-center">
               <motion.button
@@ -305,7 +319,7 @@ const RelaxationScreen = ({ userProfile }) => {
           <Link to="/dashboard">
             <motion.button
               whileHover={{ scale: 1.05 }}
-              className="mt-8 bg-gray-200 hover:bg-gray-300 text-gray-800ww py-3 px-6 rounded-full border border-gray-300 transition-all font-semibold"
+              className="mt-8 bg-gray-200 hover:bg-gray-300 text-gray-800w py-3 px-6 rounded-full border border-gray-300 transition-all font-semibold"
             >
               Volver al Dashboard
             </motion.button>
@@ -327,14 +341,14 @@ const RelaxationScreen = ({ userProfile }) => {
                 <Music className="w-5 h-5 text-white" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="font-semibold text-gray-900www  truncate">{currentSound.name}</p>
-                <p className="text-xs text-gray-500ww  truncate">{currentSound.type}</p>
+                <p className="font-semibold text-gray-900w  truncate">{currentSound.name}</p>
+                <p className="text-xs text-gray-500w  truncate">{currentSound.type}</p>
               </div>
             </div>
 
             {/* Controles centrales */}
             <div className="flex items-center gap-4 flex-1 max-w-md">
-              <motion.button onClick={handlePrevious} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="text-gray-600ww hover:text-gray-800ww p-2 rounded-full">
+              <motion.button onClick={handlePrevious} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="text-gray-600w hover:text-gray-800w p-2 rounded-full">
                 <SkipBack className="w-5 h-5" />
               </motion.button>
               <motion.button
@@ -345,14 +359,14 @@ const RelaxationScreen = ({ userProfile }) => {
               >
                 {isPlaying ? <Pause className="w-6 h-6" /> : <Play className="w-6 h-6" />}
               </motion.button>
-              <motion.button onClick={handleNext} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="text-gray-600ww hover:text-gray-800ww p-2 rounded-full">
+              <motion.button onClick={handleNext} whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="text-gray-600w hover:text-gray-800w p-2 rounded-full">
                 <SkipForward className="w-5 h-5" />
               </motion.button>
             </div>
 
             {/* Progress bar */}
             <div className="flex items-center gap-2 flex-1 max-w-lg">
-              <span className="text-xs text-gray-600ww  min-w-[4rem]">{formatTime(currentTime)}</span>
+              <span className="text-xs text-gray-600w  min-w-[4rem]">{formatTime(currentTime)}</span>
               <input
                 type="range"
                 min="0"
@@ -361,24 +375,24 @@ const RelaxationScreen = ({ userProfile }) => {
                 onChange={handleProgressChange}
                 className="flex-1 h-1 bg-gray-300 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:bg-green-500 [&::-webkit-slider-thumb]:rounded-full"
               />
-              <span className="text-xs text-gray-600ww  min-w-[4rem] text-right">{formatTime(duration)}</span>
+              <span className="text-xs text-gray-600w  min-w-[4rem] text-right">{formatTime(duration)}</span>
             </div>
 
             {/* Controles derechos: volumen y repeat/shuffle */}
             <div className="flex items-center gap-4">
-              <motion.button onClick={() => setIsShuffle(!isShuffle)} whileHover={{ scale: 1.1 }} className={`p-2 rounded-full ${isShuffle ? 'text-green-500' : 'text-gray-600ww  hover:text-gray-800ww '}`}>
+              <motion.button onClick={() => setIsShuffle(!isShuffle)} whileHover={{ scale: 1.1 }} className={`p-2 rounded-full ${isShuffle ? 'text-green-500' : 'text-gray-600w  hover:text-gray-800w '}`}>
                 <Shuffle className="w-5 h-5" />
               </motion.button>
-              <motion.button onClick={() => setIsRepeat(!isRepeat)} whileHover={{ scale: 1.1 }} className={`p-2 rounded-full ${isRepeat ? 'text-green-500' : 'text-gray-600ww  hover:text-gray-800ww '}`}>
+              <motion.button onClick={() => setIsRepeat(!isRepeat)} whileHover={{ scale: 1.1 }} className={`p-2 rounded-full ${isRepeat ? 'text-green-500' : 'text-gray-600w  hover:text-gray-800w '}`}>
                 <Repeat className="w-5 h-5" />
               </motion.button>
               <div className="flex items-center gap-2">
                 {volume > 0.5 ? (
-                  <Volume2 className="w-5 h-5 text-gray-600ww " />
+                  <Volume2 className="w-5 h-5 text-gray-600w " />
                 ) : volume > 0 ? (
-                  <Volume1 className="w-5 h-5 text-gray-600ww " />
+                  <Volume1 className="w-5 h-5 text-gray-600w " />
                 ) : (
-                  <VolumeX className="w-5 h-5 text-gray-600ww " />
+                  <VolumeX className="w-5 h-5 text-gray-600w " />
                 )}
                 <input
                   type="range"

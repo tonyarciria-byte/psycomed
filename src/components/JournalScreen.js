@@ -170,13 +170,14 @@ const JournalScreen = ({ moodEntries, setMoodEntries, userProfile }) => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* TopNavigation centrado */}
-      <div className="flex justify-center items-center mb-6 pt-4">
-        <TopNavigation />
-      </div>
-      
-      <div className="container mx-auto px-4 py-8 max-w-3xl pt-0">
+    <div className="min-h-screen flex flex-col items-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 pt-8">
+      <TopNavigation />
+      <motion.div
+        initial={{ opacity: 0, y: -50 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: "easeOut" }}
+        className="bg-gray-100 from-gray-50 to-gray-50 rounded-3xl shadow-xl p-8 max-w-4xl w-full border border-gray-200 text-center"
+      >
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -189,10 +190,10 @@ const JournalScreen = ({ moodEntries, setMoodEntries, userProfile }) => {
           >
             <BookOpen className="w-10 h-10 text-white" />
           </motion.div>
-          <h1 className="text-4xl font-bold from-purple-600 to-purple-800 bg-clip-text text-purple-600w mb-3">
+          <h1 className="text-4xl font-bold from-purple-600 to-purple-800 bg-clip-text text-purple-600 mb-3">
             Mis Notas de Diario
           </h1>
-          <p className="text-gray-600www text-lg font-medium">
+          <p className="text-gray-600 text-lg font-medium">
             Registra tus pensamientos, emociones y reflexiones diarias
           </p>
         </motion.div>
@@ -209,7 +210,7 @@ const JournalScreen = ({ moodEntries, setMoodEntries, userProfile }) => {
               onClick={handleCreateNewEntry}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-4 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-3 text-gray-900ww"
+              className="bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-4 px-8 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-3"
             >
               <PlusCircle className="w-6 h-6 text-white" />
               Nueva Nota de Diario
@@ -218,7 +219,7 @@ const JournalScreen = ({ moodEntries, setMoodEntries, userProfile }) => {
             <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
               {/* Búsqueda */}
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400ww" />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Buscar en mis notas..."
@@ -230,7 +231,7 @@ const JournalScreen = ({ moodEntries, setMoodEntries, userProfile }) => {
 
               {/* Filtro por fecha */}
               <div className="relative">
-                <Calendar className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400ww" />
+                <div className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   type="date"
                   value={selectedDate}
@@ -300,10 +301,10 @@ const JournalScreen = ({ moodEntries, setMoodEntries, userProfile }) => {
               >
                 <BookOpen className="w-16 h-16 text-blue-500" />
               </motion.div>
-              <h3 className="text-2xl font-bold text-gray-900ww mb-4">
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">
                 {selectedDate || searchQuery ? 'No se encontraron notas' : '¡Empieza tu diario!'}
               </h3>
-              <p className="text-gray-500ww text-lg mb-8">
+              <p className="text-gray-500 text-lg mb-8">
                 {selectedDate || searchQuery 
                   ? 'Intenta con otros filtros de búsqueda'
                   : 'Crea tu primera nota de diario y comienza a documentar tus pensamientos y experiencias'
@@ -334,58 +335,63 @@ const JournalScreen = ({ moodEntries, setMoodEntries, userProfile }) => {
                     className="group bg-gray-50 backdrop-blur-sm border border-gray-200/50 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300"
                   >
                     <div className="p-8">
-                      <div className="flex items-start justify-between mb-6">
-                        <div className="flex items-center gap-4">
+                      <div className="flex items-start gap-4 mb-6">
+                        <div className="flex-shrink-0">
                           <motion.div
                             whileHover={{ scale: 1.1 }}
-                            className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200/50"
+                            className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-50 to-purple-50 border border-blue-200/50 mb-2"
                           >
                             <span className="text-2xl">{entry.moodEmoji}</span>
                           </motion.div>
-                          <div>
-                            <h3 className="text-xl font-bold text-gray-900ww mb-1 group-hover:text-blue-600 transition-colors">
-                              {entry.title}
-                            </h3>
-                            <div className="flex items-center gap-4 text-sm text-gray-500ww">
-                              <span className="font-medium">{formatDate(entry.date)}</span>
-                              <span>•</span>
-                              <span>{entry.wordCount || 0} palabras</span>
+                          {entry.moodRating && (
+                            <div className="text-sm text-gray-600 text-center">
+                              {entry.moodRating}/20
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 text-left">
+                              <h3 className="text-xl font-bold text-gray-900 mb-1 group-hover:text-blue-600 transition-colors">
+                                {entry.title}
+                              </h3>
                               {entry.moodRating && (
-                                <>
-                                  <span>•</span>
-                                  <span className="flex items-center gap-1">
-                                    Estado de ánimo: {entry.moodRating}/10
-                                  </span>
-                                </>
+                                <div className="text-sm text-gray-600 mb-2">
+                                  Ánimo: {entry.moodRating}/20
+                                </div>
                               )}
+                              <div className="flex items-center gap-4 text-sm text-gray-500">
+                                <span className="font-medium">{formatDate(entry.date)}</span>
+                                <span>•</span>
+                                <span>{entry.wordCount || 0} palabras</span>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 ml-4">
+                              <motion.button
+                                onClick={() => handleEditEntry(entry)}
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                className="p-3 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                                title="Editar nota"
+                              >
+                                <Edit className="w-5 h-5" />
+                              </motion.button>
+                              <motion.button
+                                onClick={() => handleDeleteEntry(entry.id)}
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.9 }}
+                                className="p-3 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
+                                title="Eliminar nota"
+                              >
+                                <Trash className="w-5 h-5" />
+                              </motion.button>
                             </div>
                           </div>
-                        </div>
-
-                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                          <motion.button
-                            onClick={() => handleEditEntry(entry)}
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            className="p-3 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
-                            title="Editar nota"
-                          >
-                            <Edit className="w-5 h-5" />
-                          </motion.button>
-                          <motion.button
-                            onClick={() => handleDeleteEntry(entry.id)}
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            className="p-3 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-colors"
-                            title="Eliminar nota"
-                          >
-                            <Trash className="w-5 h-5" />
-                          </motion.button>
                         </div>
                       </div>
 
                       <div className="mb-6">
-                        <p className="text-gray-700ww leading-relaxed text-lg">
+                        <p className="text-gray-700 leading-relaxed text-lg">
                           {getPreviewText(entry.content)}
                         </p>
                       </div>
@@ -425,16 +431,16 @@ const JournalScreen = ({ moodEntries, setMoodEntries, userProfile }) => {
           className="text-center mt-12"
         >
           <Link to="/dashboard">
-            <motion.button 
+            <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="bg-gray-200/80 backdrop-blur-sm text-gray-700w font-medium py-3 px-8 rounded-xl border border-gray-300/50 hover:bg-gray-300/80 transition-all duration-300"
+              className="bg-gray-200/80 backdrop-blur-sm text-gray-700 font-medium py-3 px-8 rounded-xl border border-gray-300/50 hover:bg-gray-300/80 transition-all duration-300"
             >
               Volver al Dashboard
             </motion.button>
           </Link>
         </motion.div>
-      </div>
+      </motion.div>
     </div>
   );
 };

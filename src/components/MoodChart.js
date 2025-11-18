@@ -143,9 +143,10 @@ const MoodChart = ({ moodEntries = [], userProfile }) => {
     ],  
   };  
 
-  // Opciones base (compactas y con escala 20 para mood)  
-  const getOptions = (isSleep = false) => ({  
-    responsive: true,  
+  // Opciones base (compactas y con escala 20 para mood)
+  const getOptions = (isSleep = false) => ({
+    responsive: true,
+    maintainAspectRatio: false,
     plugins: {  
       legend: { display: true, labels: { color: '#374151', font: { size: 12, weight: 'bold' } } }, // Font más pequeña  
       title: { display: false },  
@@ -197,8 +198,8 @@ const MoodChart = ({ moodEntries = [], userProfile }) => {
         transition={{ duration: 0.6, delay: 0.4 }}  
         className="bg-white rounded-3xl shadow-lg p-6 text-center border border-gray-200 mt-8"  
       >  
-        <BarChart3 className="w-12 h-12 text-gray-400ww mx-auto mb-4" />  
-        <p className="text-gray-600ww font-medium">¡Historial borrado! Necesitas más registros para ver comparativas de ánimo y sueño.</p>  
+        <BarChart3 className="w-12 h-12 text-gray-400w mx-auto mb-4" />  
+        <p className="text-gray-600w font-medium">¡Historial borrado! Necesitas más registros para ver comparativas de ánimo y sueño.</p>  
       </motion.div>  
     );  
   }  
@@ -242,15 +243,6 @@ const MoodChart = ({ moodEntries = [], userProfile }) => {
         </div>  
         {/* Selector de Período con animaciones - Más compacto */}
         <div className="flex items-center gap-1 relative"> {/* gap-2 -> gap-1 */}
-          {!userProfile?.isPremium && (
-            <div className="absolute inset-0 bg-black/20 backdrop-blur-sm rounded-lg flex items-center justify-center z-10">
-              <div className="text-center text-white">
-                <Lock className="w-6 h-6 mx-auto mb-1" />
-                <p className="text-xs font-bold">Premium</p>
-                <p className="text-xs">Análisis avanzado</p>
-              </div>
-            </div>
-          )}
           <AnimatePresence mode="wait">
             {viewPeriod !== 'daily' && (
               <motion.button
@@ -271,18 +263,16 @@ const MoodChart = ({ moodEntries = [], userProfile }) => {
               <motion.button
                 key={period}
                 onClick={() => {
-                  if (userProfile?.isPremium || period === 'daily') {
-                    setViewPeriod(period);
-                    setCurrentPeriod(new Date());
-                  }
+                  setViewPeriod(period);
+                  setCurrentPeriod(new Date());
                 }}
                 className={`px-2 py-1 text-xs font-medium rounded-md transition-all {/* text-sm -> text-xs, px-3 -> px-2 */}
                   ${viewPeriod === period
                     ? 'bg-blue-500 text-white shadow-md'
                     : 'text-gray-600ww hover:bg-gray-200'
-                  } ${!userProfile?.isPremium && period !== 'daily' ? 'cursor-not-allowed opacity-50' : ''}`}
-                whileHover={{ scale: userProfile?.isPremium || period === 'daily' ? 1.05 : 1 }}
-                whileTap={{ scale: userProfile?.isPremium || period === 'daily' ? 0.95 : 1 }}
+                  }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
                 {period === 'daily' ? 'Días' : period === 'weekly' ? 'Semanas' : period === 'monthly' ? 'Meses' : 'Años'}
               </motion.button>
@@ -307,22 +297,22 @@ const MoodChart = ({ moodEntries = [], userProfile }) => {
       </div>  
 
       <AnimatePresence mode="wait">  
-        <motion.div  
-          key={viewPeriod}  
-          variants={chartVariants}  
-          initial="hidden"  
-          animate="visible"  
-          exit="hidden"  
-          className="grid grid-cols-1 gap-4"
-        >  
+        <motion.div
+          key={viewPeriod}
+          variants={chartVariants}
+          initial="hidden"
+          animate="visible"
+          exit="hidden"
+          className="grid grid-cols-1 md:grid-cols-2 gap-4 "
+        >
           {/* Gráfica de Ánimo */}  
-          <motion.div variants={chartVariants}>  
-            <h4 className="text-lg font-semibold text-gray-800ww mb-2 flex items-center gap-2"> {/* mb-3 -> mb-2 */}  
+          <motion.div variants={chartVariants} className="h-full">  
+            <h4 className="text-lg font-semibold text-gray-800w mb-2 flex items-center gap-2"> {/* mb-3 -> mb-2 */}  
               Evolución del Ánimo  
             </h4>  
-            <div className="relative h-64"> {/* h-80 -> h-64 para compacto */}  
-              <Bar data={moodData} options={moodOptions} />  
-            </div>  
+            <div className={`relative ${groupedEntries.length === 0 ? 'h-[400px]' : 'h-80'}`}>
+              <Bar data={moodData} options={moodOptions} />
+            </div>
           </motion.div>  
 
           {/* Gráfica de Sueño */}  
@@ -331,9 +321,9 @@ const MoodChart = ({ moodEntries = [], userProfile }) => {
               <Moon className="w-5 h-5 text-purple-500" />  
               Calidad de Sueño  
             </h4>  
-            <div className="relative h-64">  
-              <Bar data={sleepData} options={sleepOptions} />  
-            </div>  
+            <div className={`relative ${groupedEntries.length === 0 ? 'h-[400px]' : 'h-80'}`}>
+              <Bar data={sleepData} options={sleepOptions} />
+            </div>
           </motion.div>  
         </motion.div>  
       </AnimatePresence>  

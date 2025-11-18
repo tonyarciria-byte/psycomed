@@ -13,7 +13,7 @@ const WelcomeScreen = () => {
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center border-gray-200 white:border-gray-700"
+        className="bg-white rounded-3xl shadow-2xl p-8 max-w-md w-full text-center border-gray-200 dark:border-gray-700"
       >
         <motion.div
           initial={{ scale: 0 }}
@@ -23,10 +23,10 @@ const WelcomeScreen = () => {
         >
           <Heart className="w-16 h-16 text-blue-500 dark:text-blue-400" />
         </motion.div>
-        <h1 className="text-4xl font-extrabold text-gray-900w mb-4 leading-tight">
-          {t('welcome')} <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400">PSICOMED</span>
+        <h1 className="text-4xl font-extrabold text-gray-900 mb-4 leading-tight">
+          {t('welcome')} <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">PSICOMED</span>
         </h1>
-        <p className="text-lg text-gray-200w dark:text-gray-600w mb-8">
+        <p className="text-lg text-gray-600w mb-8">
           {t('welcomeMessage')}
         </p>
         <Link to="/dashboard">

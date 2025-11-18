@@ -52,12 +52,12 @@ const DashboardContent = ({ moodEntries, setMoodEntries, onRegisterMoodClick, us
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, delay: 0.2 }}
-      className="bg-gradient-to-b from-gray-50w to-gray-50w rounded-3xl shadow-xl p-8 max-w-3xl w-full border border-gray-200 text-center"
+      className="bg-gray-50 from-gray-50w to-gray-50w rounded-3xl shadow-xl p-8 max-w-4xl w-full border border-gray-200 text-center"
     >
       {/* Encabezado */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-3xl font-extrabold text-gray-800www">
-          Bienvenido de nuevo 👋
+        <h2 className="text-3xl font-extrabold from-blue-400 to-purple-800 bg-clip-text text-purple-600 mb-3">
+          Bienvenido de nuevo, {userProfile.name} 👋
         </h2>
         <motion.div
           whileHover={{ rotate: 15, scale: 1.1 }}
@@ -70,7 +70,7 @@ const DashboardContent = ({ moodEntries, setMoodEntries, onRegisterMoodClick, us
 
       {/* Estado de ánimo de hoy */}
       <div className="text-center mb-10">
-        <p className="text-gray-600ww  text-lg mb-4">Tu estado de ánimo hoy:</p>
+        <p className="text-gray-600w  text-lg mb-4">Tu estado de ánimo hoy:</p>
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -80,7 +80,7 @@ const DashboardContent = ({ moodEntries, setMoodEntries, onRegisterMoodClick, us
         >
           <span className="text-6xl">{todayMood.emoji}</span>
         </motion.div>
-        <p className="text-xl font-semibold text-gray-700www mt-4 leading-relaxed text-center">
+        <p className="text-xl font-semibold text-gray-700w mt-4 leading-relaxed text-center">
           {todayMood.message}
         </p>
       </div>
@@ -90,7 +90,7 @@ const DashboardContent = ({ moodEntries, setMoodEntries, onRegisterMoodClick, us
         onClick={onRegisterMoodClick}
         whileHover={{ scale: 1.05, boxShadow: '0px 8px 20px rgba(0,0,0,0.2)' }}
         whileTap={{ scale: 0.95 }}
-        className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-4 px-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-2 text-lg"
+        className="w-3xl mx-auto bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-4 px-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-2 text-lg transition-all duration-300"
       >
         <Plus className="w-6 h-6" />
         Registrar mi ánimo

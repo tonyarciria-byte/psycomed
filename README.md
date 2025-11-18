@@ -97,13 +97,7 @@ Una aplicación moderna y completa para el seguimiento del estado de ánimo, bie
 
 ## 🚀 Instalación y Configuración
 
-### 1. Clonar el Repositorio
-```bash
-git clone https://github.com/tu-usuario/psicomed.git
-cd psicomed
-```
-
-### 2. Instalar Dependencias
+### 1. Instalar Dependencias
 ```bash
 npm install
 ```
@@ -224,8 +218,7 @@ Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) par
 Si tienes preguntas o necesitas ayuda:
 
 1. Revisa la [documentación](docs/)
-2. Abre un [issue](https://github.com/tu-usuario/psicomed/issues)
-3. Contacta al equipo de soporte
+2. Contacta al equipo de soporte
 
 ## 🔮 Roadmap
 

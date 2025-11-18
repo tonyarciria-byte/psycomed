@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { User, Settings, ExternalLink, Shield, Heart, Bell } from 'lucide-react';
+import { User, Settings, ExternalLink, Shield, Heart, Bell, Crown } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import TopNavigation from './TopNavigation';
 
@@ -20,13 +20,23 @@ const ProfileScreen = ({ userProfile, setUserProfile }) => {
         className="relative bg-white rounded-3xl shadow-2xl p-8 max-w-2xl w-full border border-gray-200 text-center"
       >
         <motion.button
+          onClick={() => navigate('/premium')}
+          whileHover={{ scale: 1.1, rotate: 90 }}
+          whileTap={{ scale: 0.95 }}
+          className="absolute top-4 left-4 p-3 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 text-white shadow-lg hover:shadow-xl transition-all duration-300 z-10"
+          title="Premium"
+        >
+          <Crown className="w-6 h-6" />
+        </motion.button>
+
+        <motion.button
           onClick={() => navigate('/settings')}
           whileHover={{ scale: 1.1, rotate: 90 }}
           whileTap={{ scale: 0.95 }}
-          className="absolute top-4 right-4 p-3 rounded-full bg-gray-200 text-gray-700w  shadow-lg hover:shadow-xl transition-all duration-300 z-10"
+          className="absolute top-4 right-4 p-3 rounded-full bg-gray-200 text-gray-700 shadow-lg hover:shadow-xl transition-all duration-300 z-10"
           title="Configuración General"
         >
-          <Settings className="w-6 h-6 text-gray-700ww-24" />
+          <Settings className="w-6 h-6" />
         </motion.button>
 
         <User className="w-20 h-20 text-purple-600 text-purple-400 mx-auto mb-6 p-2 bg-purple-100 rounded-full" />
