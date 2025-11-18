@@ -30,16 +30,33 @@ const WSRegister = ({ setUserProfile }) => {
   // Setup reCAPTCHA
   useEffect(() => {
     if (auth && !window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        size: 'invisible',
-        callback: (response) => {
-          console.log('reCAPTCHA solved');
-        },
-        'expired-callback': () => {
-          console.log('reCAPTCHA expired');
-        }
-      });
+      try {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          size: 'invisible',
+          callback: (response) => {
+            console.log('reCAPTCHA solved');
+          },
+          'expired-callback': () => {
+            console.log('reCAPTCHA expired');
+            // Reset verifier on expiration
+            if (window.recaptchaVerifier) {
+              window.recaptchaVerifier.clear();
+              window.recaptchaVerifier = null;
+            }
+          }
+        });
+      } catch (error) {
+        console.error('Error setting up reCAPTCHA:', error);
+      }
     }
+
+    // Cleanup on unmount
+    return () => {
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = null;
+      }
+    };
   }, [auth]);
 
   // Check if Firebase is configured
@@ -173,6 +190,19 @@ const WSRegister = ({ setUserProfile }) => {
     setLoading(true);
 
     try {
+      // Ensure reCAPTCHA is ready
+      if (!window.recaptchaVerifier) {
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+          size: 'invisible',
+          callback: (response) => {
+            console.log('reCAPTCHA solved');
+          },
+          'expired-callback': () => {
+            console.log('reCAPTCHA expired');
+          }
+        });
+      }
+
       const phoneNumber = formData.phoneNumber.startsWith('+') ? formData.phoneNumber : `+57${formData.phoneNumber}`;
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
       setConfirmationResult(confirmation);
@@ -180,10 +210,13 @@ const WSRegister = ({ setUserProfile }) => {
     } catch (error) {
       console.error('SMS error:', error);
       setError(error.message);
-      // Reset reCAPTCHA on error
-      if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
-        window.recaptchaVerifier = null;
+
+      // Only reset reCAPTCHA on specific errors
+      if (error.code === 'auth/too-many-requests' || error.code === 'auth/invalid-phone-number') {
+        if (window.recaptchaVerifier) {
+          window.recaptchaVerifier.clear();
+          window.recaptchaVerifier = null;
+        }
       }
     }
     setLoading(false);
