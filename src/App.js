@@ -198,7 +198,7 @@ function App() {
     <Router>
       <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div></div>}>
         <Routes>
-          <Route path="/" element={<WelcomeScreen />} />
+          <Route path="/" element={<WelcomeScreen setUserProfile={setUserProfile} />} />
           <Route path="/dashboard" element={<DashboardScreen moodEntries={moodEntries} setMoodEntries={setMoodEntries} userProfile={userProfile} />} />
           <Route path="/register-mood" element={
             <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-black dark:to-gray-900 p-4">

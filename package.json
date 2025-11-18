@@ -4,7 +4,14 @@
       "description": "Una aplicación moderna para el seguimiento del estado de ánimo, bienestar mental y autocuidado",
       "author": "PsicoMed Team",
       "license": "MIT",
-      "keywords": ["react", "mood-tracker", "mental-health", "wellness", "tailwind", "chartjs"],
+      "keywords": [
+            "react",
+            "mood-tracker",
+            "mental-health",
+            "wellness",
+            "tailwind",
+            "chartjs"
+      ],
       "scripts": {
             "start": "react-scripts start",
             "build": "react-scripts build",
@@ -16,6 +23,7 @@
             "axios": "^1.6.2",
             "chart.js": "^4.5.0",
             "crypto-js": "^4.2.0",
+            "firebase": "^12.6.0",
             "framer-motion": "^12.23.13",
             "i18next": "^23.7.6",
             "i18next-browser-languagedetector": "^7.2.0",

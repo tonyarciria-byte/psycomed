@@ -1,10 +1,10 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Heart } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import WSRegister from './WSRegister';
 
-const WelcomeScreen = () => {
+const WelcomeScreen = ({ setUserProfile }) => {
   const { t } = useTranslation();
 
   return (
@@ -26,18 +26,11 @@ const WelcomeScreen = () => {
         <h1 className="text-4xl font-extrabold text-gray-900 mb-4 leading-tight">
           {t('welcome')} <span className="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">PSICOMED</span>
         </h1>
-        <p className="text-lg text-gray-600w mb-8">
+        <p className="text-lg text-gray-600 mb-8">
           {t('welcomeMessage')}
         </p>
-        <Link to="/dashboard">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="w-full bg-gradient-to-r from-blue-500 to-purple-600  text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
-          >
-            {t('startJourney')}
-          </motion.button>
-        </Link>
+
+        <WSRegister setUserProfile={setUserProfile} />
       </motion.div>
     </div>
   );
