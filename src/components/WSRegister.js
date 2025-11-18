@@ -23,6 +23,7 @@ const WSRegister = ({ setUserProfile }) => {
     verificationCode: ''
   });
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [showPhoneVerification, setShowPhoneVerification] = useState(false);
   const [confirmationResult, setConfirmationResult] = useState(null);
@@ -59,6 +60,25 @@ const WSRegister = ({ setUserProfile }) => {
     };
   }, [auth]);
 
+  const getFriendlyErrorMessage = (error) => {
+    switch (error.code) {
+      case 'auth/email-already-in-use':
+        return 'Este correo electrónico ya está registrado. Intenta iniciar sesión.';
+      case 'auth/weak-password':
+        return 'La contraseña es demasiado débil. Usa al menos 6 caracteres.';
+      case 'auth/invalid-email':
+        return 'Correo electrónico inválido.';
+      case 'auth/user-not-found':
+        return 'Usuario no encontrado.';
+      case 'auth/wrong-password':
+        return 'Contraseña incorrecta.';
+      case 'auth/too-many-requests':
+        return 'Demasiados intentos. Inténtalo más tarde.';
+      default:
+        return 'Error de autenticación. Inténtalo de nuevo.';
+    }
+  };
+
   // Check if Firebase is configured
   if (!auth) {
     return (
@@ -90,12 +110,39 @@ const WSRegister = ({ setUserProfile }) => {
       ...formData,
       [e.target.name]: e.target.value
     });
+    // Clear field error when user starts typing
+    if (fieldErrors[e.target.name]) {
+      setFieldErrors({
+        ...fieldErrors,
+        [e.target.name]: false
+      });
+    }
   };
 
   const handleEmailPasswordAuth = async (e) => {
     e.preventDefault();
     setError('');
+    setFieldErrors({});
     setLoading(true);
+
+    // Validate required fields
+    const errors = {};
+    if (!formData.email) errors.email = true;
+    if (!formData.password) errors.password = true;
+    if (!isLogin) {
+      if (!formData.confirmPassword) errors.confirmPassword = true;
+      if (!formData.name) errors.name = true;
+      if (!formData.age) errors.age = true;
+      if (!formData.country) errors.country = true;
+      if (!formData.diagnosis) errors.diagnosis = true;
+      if (!formData.language) errors.language = true;
+    }
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      setError('Por favor, completa todos los campos requeridos.');
+      setLoading(false);
+      return;
+    }
 
     try {
       if (isLogin) {
@@ -121,6 +168,7 @@ const WSRegister = ({ setUserProfile }) => {
       } else {
         // Register
         if (formData.password !== formData.confirmPassword) {
+          setFieldErrors({ password: true, confirmPassword: true });
           setError('Las contraseñas no coinciden');
           setLoading(false);
           return;
@@ -146,7 +194,15 @@ const WSRegister = ({ setUserProfile }) => {
       }
     } catch (error) {
       console.error('Auth error:', error);
-      setError(error.message);
+      setError(getFriendlyErrorMessage(error));
+      const fieldErr = {};
+      if (error.code === 'auth/email-already-in-use' || error.code === 'auth/invalid-email' || error.code === 'auth/user-not-found') {
+        fieldErr.email = true;
+      }
+      if (error.code === 'auth/weak-password' || error.code === 'auth/wrong-password') {
+        fieldErr.password = true;
+      }
+      setFieldErrors(fieldErr);
     }
     setLoading(false);
   };
@@ -295,7 +351,7 @@ const WSRegister = ({ setUserProfile }) => {
             value={formData.email}
             onChange={handleInputChange}
             required
-            className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+            className={`w-full pl-12 pr-4 py-3 bg-gray-50 border ${fieldErrors.email ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all`}
           />
         </div>
 
@@ -309,7 +365,7 @@ const WSRegister = ({ setUserProfile }) => {
             value={formData.password}
             onChange={handleInputChange}
             required
-            className="w-full pl-12 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+            className={`w-full pl-12 pr-12 py-3 bg-gray-50 border ${fieldErrors.password ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all`}
           />
           <button
             type="button"
@@ -331,7 +387,7 @@ const WSRegister = ({ setUserProfile }) => {
               value={formData.confirmPassword}
               onChange={handleInputChange}
               required
-              className="w-full pl-12 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+              className={`w-full pl-12 pr-12 py-3 bg-gray-50 border ${fieldErrors.confirmPassword ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all`}
             />
             <button
               type="button"
@@ -354,7 +410,7 @@ const WSRegister = ({ setUserProfile }) => {
               value={formData.name}
               onChange={handleInputChange}
               required
-              className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+              className={`w-full pl-12 pr-4 py-3 bg-gray-50 border ${fieldErrors.name ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all`}
             />
           </div>
         )}
@@ -372,7 +428,7 @@ const WSRegister = ({ setUserProfile }) => {
               required
               min="1"
               max="120"
-              className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+              className={`w-full pl-12 pr-4 py-3 bg-gray-50 border ${fieldErrors.age ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all`}
             />
           </div>
         )}
@@ -386,7 +442,7 @@ const WSRegister = ({ setUserProfile }) => {
               value={formData.country}
               onChange={handleInputChange}
               required
-              className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+              className={`w-full pl-12 pr-4 py-3 bg-gray-50 border ${fieldErrors.country ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all`}
             >
               <option value="">Selecciona tu país</option>
               <option value="Colombia">Colombia</option>
@@ -407,7 +463,7 @@ const WSRegister = ({ setUserProfile }) => {
               value={formData.diagnosis}
               onChange={handleInputChange}
               required
-              className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+              className={`w-full pl-12 pr-4 py-3 bg-gray-50 border ${fieldErrors.diagnosis ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all`}
             >
               <option value="">Selecciona tu diagnóstico</option>
               <option value="Ansiedad">Ansiedad</option>
@@ -428,7 +484,7 @@ const WSRegister = ({ setUserProfile }) => {
               value={formData.language}
               onChange={handleInputChange}
               required
-              className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+              className={`w-full pl-12 pr-4 py-3 bg-gray-50 border ${fieldErrors.language ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all`}
             >
               <option value="es">Español</option>
               <option value="en">English</option>
@@ -445,7 +501,7 @@ const WSRegister = ({ setUserProfile }) => {
             placeholder="Número de teléfono (+57...)"
             value={formData.phoneNumber}
             onChange={handleInputChange}
-            className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+            className={`w-full pl-12 pr-4 py-3 bg-gray-50 border ${fieldErrors.phoneNumber ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all`}
           />
         </div>
 
@@ -459,7 +515,7 @@ const WSRegister = ({ setUserProfile }) => {
               placeholder="Código de verificación"
               value={formData.verificationCode}
               onChange={handleInputChange}
-              className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+              className={`w-full pl-12 pr-4 py-3 bg-gray-50 border ${fieldErrors.verificationCode ? 'border-red-500' : 'border-gray-200'} rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all`}
             />
           </div>
         )}

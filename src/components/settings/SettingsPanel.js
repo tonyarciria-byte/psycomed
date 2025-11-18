@@ -5,11 +5,14 @@ import {
   User, Shield, Palette, Bell, Globe, Key, Info, HelpCircle,
   Check, X, ChevronRight, ChevronDown, Phone, Mail,
   Eye, EyeOff, Smartphone, Fingerprint, Save, ArrowLeft,
-  CheckCircle, AlertTriangle, Clock, Settings
+  CheckCircle, AlertTriangle, Clock, Settings, LogOut
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { contactsManager } from '../../utils/contactsManager';
 import { themeManager } from '../../utils/themeManager';
+import { signOut } from 'firebase/auth';
+import { auth } from '../../firebase';
+import emailjs from '@emailjs/browser';
 
 // Lazy load sub-panels for better performance
 const ProfilePanel = lazy(() => import('./ProfilePanel'));
@@ -139,10 +142,10 @@ const SecurityPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) => {
     alert(`Historial de Seguridad:\n\n${historyList}\nLos eventos más antiguos se eliminan automáticamente después de 90 días por seguridad.`);
   };
 
-  const handleExportData = () => {
-    // Simular exportación de datos del usuario
+  const handleExportData = async () => {
     const userData = {
       profile: userProfile,
+      moodEntries: moodEntries,
       exportDate: new Date().toISOString(),
       dataTypes: [
         'Información personal y diagnóstico',
@@ -156,17 +159,50 @@ const SecurityPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) => {
     };
 
     const dataStr = JSON.stringify(userData, null, 2);
-    const dataBlob = new Blob([dataStr], { type: 'application/json' });
-    const url = URL.createObjectURL(dataBlob);
-    
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `psicomed-data-export-${new Date().toISOString().split('T')[0]}.json`;
-    link.click();
-    
-    URL.revokeObjectURL(url);
-    
-    alert('📁 Datos exportados exitosamente!\n\nSe ha descargado un archivo JSON con toda tu información personal, incluyendo:\n• Perfil y configuración\n• Historial médico\n• Preferencias de usuario\n• Datos de actividad\n\nPor seguridad, este archivo contiene información sensible. Guárdalo en un lugar seguro.');
+
+    // If user has email, send via email
+    if (userProfile.email) {
+      try {
+        await emailjs.send(
+          'service_psicomed', // Replace with your EmailJS service ID
+          'template_data_export', // Replace with your EmailJS template ID
+          {
+            to_email: userProfile.email,
+            user_name: userProfile.name,
+            data: dataStr,
+            export_date: new Date().toLocaleDateString()
+          },
+          'your_public_key' // Replace with your EmailJS public key
+        );
+        alert('📧 Datos enviados exitosamente a tu correo electrónico!\n\nSe ha enviado un email con toda tu información personal a ' + userProfile.email);
+      } catch (error) {
+        console.error('Error sending email:', error);
+        alert('Error al enviar el email. Descargando archivo localmente.');
+        // Fallback to download
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `psicomed-data-export-${new Date().toISOString().split('T')[0]}.json`;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+    } else if (userProfile.phone) {
+      // For phone, open SMS with data (limited by SMS length)
+      const smsBody = `PsicoMed Data Export\n\n${dataStr.substring(0, 1000)}...`; // Truncate for SMS
+      window.open(`sms:${userProfile.phone}?body=${encodeURIComponent(smsBody)}`, '_blank');
+      alert('📱 Datos enviados via SMS!\n\nSe ha abierto tu aplicación de mensajes con los datos.');
+    } else {
+      // Fallback to download
+      const dataBlob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `psicomed-data-export-${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      alert('📁 Datos exportados exitosamente!\n\nSe ha descargado un archivo JSON con toda tu información personal.');
+    }
   };
 
   return (
@@ -179,22 +215,22 @@ const SecurityPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) => {
     >
       <div className="flex items-center gap-3 mb-6">
         <Shield className="w-6 h-6 text-blue-500" aria-hidden="true" />
-        <h2 id="security-title" className="text-2xl font-bold text-gray-900www">
+        <h2 id="security-title" className="text-2xl font-bold text-gray-900w">
           Seguridad
         </h2>
       </div>
 
       {/* Change Password Section */}
       <div className="bg-gray-50 rounded-xl p-6 border-t border-gray-200 shadow-xl">
-        <h3 className="text-lg font-semibold text-gray-700www-24 mb-4 flex items-center gap-2">
-          <Key className="w-5 h-5 text-gray-500www-24" aria-hidden="true" />
+        <h3 className="text-lg font-semibold text-gray-700w-24 mb-4 flex items-center gap-2">
+          <Key className="w-5 h-5 text-gray-500w-24" aria-hidden="true" />
           Cambiar Contraseña
         </h3>
         <div className="space-y-4" role="form" aria-labelledby="password-form">
           <div>
             <label
               htmlFor="current-password"
-              className="block text-sm font-medium text-gray-600ww mb-2">
+              className="block text-sm font-medium text-gray-600w mb-2">
               Contraseña Actual*
             </label>
             <div className="relative">
@@ -207,14 +243,14 @@ const SecurityPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) => {
                 aria-describedby={errors.currentPassword ? 'current-password-error' : undefined}
                 className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   errors.currentPassword ? 'border-red-500' : 'border-gray-300'
-                } bg-white  text-gray-900ww dark:text-white`}
+                } bg-white  text-gray-900w `}
                 placeholder="Ingresa tu contraseña actual"
                 required
               />
               <button
                 type="button"
                 onClick={() => togglePasswordVisibility('current')}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400ww hover:text-gray-600ww dark:text-gray-300w dark:hover:text-gray-100w focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400w hover:text-gray-600w focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
                 aria-label={showPasswords.current ? 'Ocultar contraseña' : 'Mostrar contraseña'}
               >
                 {showPasswords.current ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -230,7 +266,7 @@ const SecurityPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) => {
           <div>
             <label
               htmlFor="new-password"
-              className="block text-sm font-medium text-gray-600ww mb-2">
+              className="block text-sm font-medium text-gray-600w mb-2">
               Nueva Contraseña*
             </label>
             <div className="relative">
@@ -243,7 +279,7 @@ const SecurityPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) => {
                 aria-describedby={errors.newPassword ? 'new-password-error' : undefined}
                 className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   errors.newPassword ? 'border-red-500' : 'border-gray-300 '
-                } bg-whitetext-gray-900ww dark:text-white`}
+                } bg-whitetext-gray-900w`}
                 placeholder="Ingresa tu nueva contraseña"
                 required
                 minLength="8"
@@ -251,7 +287,7 @@ const SecurityPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) => {
               <button
                 type="button"
                 onClick={() => togglePasswordVisibility('new')}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400ww hover:text-gray-600ww dark:text-gray-300w dark:hover:text-gray-100w focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400w hover:text-gray-600w  focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
                 aria-label={showPasswords.new ? 'Ocultar contraseña' : 'Mostrar contraseña'}
               >
                 {showPasswords.new ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -267,7 +303,7 @@ const SecurityPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) => {
           <div>
             <label
               htmlFor="confirm-password"
-              className="block text-sm font-medium text-gray-600ww mb-2">
+              className="block text-sm font-medium text-gray-600w mb-2">
               Confirmar Nueva Contraseña*
             </label>
             <div className="relative">
@@ -280,14 +316,14 @@ const SecurityPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) => {
                 aria-describedby={errors.confirmPassword ? 'confirm-password-error' : undefined}
                 className={`w-full px-4 py-3 pr-12 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
                   errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
-                } bg-white text-gray-900ww dark:text-white`}
+                } bg-white text-gray-900w `}
                 placeholder="Confirma tu nueva contraseña"
                 required
               />
               <button
                 type="button"
                 onClick={() => togglePasswordVisibility('confirm')}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400ww hover:text-gray-600ww dark:text-gray-300w dark:hover:text-gray-100w focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400w hover:text-gray-600w  focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
                 aria-label={showPasswords.confirm ? 'Ocultar contraseña' : 'Mostrar contraseña'}
               >
                 {showPasswords.confirm ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -304,16 +340,16 @@ const SecurityPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) => {
 
       {/* Two-Factor Authentication */}
       <div className="bg-gray-50 rounded-xl p-6 border-t border-gray-200 shadow-xl">
-        <h3 className="text-lg font-semibold text-gray-900www-24 mb-4 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-gray-900w-24 mb-4 flex items-center gap-2">
           <Smartphone className="w-5 h-5 text-green-500" aria-hidden="true" />
           Autenticación de Dos Factores
         </h3>
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-medium text-gray-700www">
+            <p className="font-medium text-gray-700w">
               {twoFactorEnabled ? 'Activada' : 'Desactivada'}
             </p>
-            <p className="text-sm text-gray-500www">
+            <p className="text-sm text-gray-500w">
               Agrega una capa adicional de seguridad a tu cuenta
             </p>
           </div>
@@ -335,16 +371,16 @@ const SecurityPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) => {
 
       {/* Biometric Authentication */}
       <div className="bg-gray-50 rounded-xl p-6 border-t border-gray-200 shadow-xl">
-        <h3 className="text-lg font-semibold text-gray-900www-24 mb-4 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-gray-900w-24 mb-4 flex items-center gap-2">
           <Fingerprint className="w-5 h-5 text-purple-500" aria-hidden="true" />
           Autenticación Biométrica
         </h3>
         <div className="flex items-center justify-between">
           <div>
-            <p className="font-medium text-gray-700www">
+            <p className="font-medium text-gray-700w">
               {biometricEnabled ? 'Activada' : 'Desactivada'}
             </p>
-            <p className="text-sm text-gray-600www">
+            <p className="text-sm text-gray-600w">
               Usa tu huella digital o reconocimiento facial
             </p>
           </div>
@@ -366,7 +402,7 @@ const SecurityPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) => {
 
       {/* Security Actions */}
       <div className="bg-gray-50 rounded-xl p-6 border-t border-gray-200shadow-xl">
-        <h3 className="text-lg font-semibold text-gray-900www  mb-4">
+        <h3 className="text-lg font-semibold text-gray-900w  mb-4">
           Acciones de Seguridad
         </h3>
         <div className="space-y-3" role="group" aria-label="Acciones de seguridad">
@@ -375,24 +411,24 @@ const SecurityPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) => {
             className="w-full p-3 text-left bg-white rounded-lg border border-gray-200 hover:bg-gray-50  transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
             aria-label="Ver sesiones activas y dispositivos conectados"
           >
-            <p className="font-medium text-gray-900www ">Ver sesiones activas</p>
-            <p className="text-sm text-gray-600www ">Administra dispositivos conectados a tu cuenta</p>
+            <p className="font-medium text-gray-900w ">Ver sesiones activas</p>
+            <p className="text-sm text-gray-600w ">Administra dispositivos conectados a tu cuenta</p>
           </button>
           <button
             onClick={handleViewSecurityHistory}
             className="w-full p-3 text-left bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
             aria-label="Ver historial de cambios de seguridad"
           >
-            <p className="font-medium text-gray-900www ">Historial de seguridad</p>
-            <p className="text-sm text-gray-600www">Revisa cambios recientes en tu cuenta</p>
+            <p className="font-medium text-gray-900w ">Historial de seguridad</p>
+            <p className="text-sm text-gray-600w">Revisa cambios recientes en tu cuenta</p>
           </button>
           <button
             onClick={handleExportData}
             className="w-full p-3 text-left bg-white rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
             aria-label="Exportar y descargar mis datos"
           >
-            <p className="font-medium text-gray-900www">Exportar datos</p>
-            <p className="text-sm text-gray-600www ">Descarga una copia de tus datos</p>
+            <p className="font-medium text-gray-900w">Exportar datos</p>
+            <p className="text-sm text-gray-600w ">Descarga una copia de tus datos</p>
           </button>
         </div>
       </div>
@@ -531,14 +567,14 @@ const AppearancePanel = ({ theme, onThemeChange, userProfile, setUserProfile, on
       {/* Header Section - Removed to let SettingsPanel handle navigation */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-gray-900www text-2xl font-bold">Personaliza cómo se ve </p>
-          <p className="text-gray-600www text-2xl ">y se siente tu aplicación</p>
+          <p className="text-gray-900w text-2xl font-bold">Personaliza cómo se ve </p>
+          <p className="text-gray-600w text-2xl ">y se siente tu aplicación</p>
         </div>
       </div>
 
       {/* Theme Selection */}
       <div className="bg-white rounded-xl p-6 border-t border-gray-200 shadow-xl">
-        <h3 className="text-lg font-semibold text-gray-900www mb-4 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-gray-900w mb-4 flex items-center gap-2">
           <Palette className="w-5 h-5 text-blue-500" />
           Tema
         </h3>
@@ -553,7 +589,7 @@ const AppearancePanel = ({ theme, onThemeChange, userProfile, setUserProfile, on
             className={`p-4 rounded-lg border-2 transition-all disabled:opacity-50 ${
               localTheme === 'light'
                 ? 'border-cyan-500 bg-gradient-to-br from-cyan-400 to-blue-500'
-                : 'border-gray-200 hover:border-cyan-300 hover:bg-gradient-to-br hover:from-cyan-100 hover:to-blue-100 text-gray-700ww'
+                : 'border-gray-200 hover:border-cyan-300 hover:bg-gradient-to-br hover:from-cyan-100 hover:to-blue-100 text-gray-700w'
             }`}
           >
             <div className="flex items-center justify-between mb-2">
@@ -579,7 +615,7 @@ const AppearancePanel = ({ theme, onThemeChange, userProfile, setUserProfile, on
             className={`p-4 rounded-lg border-2 transition-all disabled:opacity-50 ${
               localTheme === 'dark'
                 ? 'border-purple-500 bg-gradient-to-br from-purple-600 to-purple-800'
-                : 'border-gray-200 hover:border-purple-300 hover:bg-gradient-to-br hover:from-purple-100 hover:to-purple-200 text-gray-700ww'
+                : 'border-gray-200 hover:border-purple-300 hover:bg-gradient-to-br hover:from-purple-100 hover:to-purple-200 text-gray-700w'
             }`}
           >
             <div className="flex items-center justify-between mb-2">
@@ -605,7 +641,7 @@ const AppearancePanel = ({ theme, onThemeChange, userProfile, setUserProfile, on
             className={`p-4 rounded-lg border-2 transition-all disabled:opacity-50 ${
               localTheme === 'auto'
                 ? 'border-gray-400 bg-gradient-to-br from-gray-400 to-gray-600'
-                : 'border-gray-200 hover:border-gray-400 hover:bg-gradient-to-br hover:from-gray-200 hover:to-gray-300 text-gray-700ww'
+                : 'border-gray-200 hover:border-gray-400 hover:bg-gradient-to-br hover:from-gray-200 hover:to-gray-300 text-gray-700w'
             }`}
           >
             <div className="flex items-center justify-between mb-2">
@@ -617,7 +653,7 @@ const AppearancePanel = ({ theme, onThemeChange, userProfile, setUserProfile, on
                 <Clock className="w-4 h-4 text-gray-100w" />
               )}
             </div>
-            <p className="text-sm text-gray-400ww/90">Cambia con el horario</p>
+            <p className="text-sm text-gray-400w/90">Cambia con el horario</p>
           </motion.button>
         </div>
 
@@ -647,19 +683,19 @@ const AppearancePanel = ({ theme, onThemeChange, userProfile, setUserProfile, on
 
       {/* Typography Settings */}
       <div className="bg-white rounded-xl p-6 border-t border-gray-200 shadow-xl">
-        <h3 className="text-lg font-semibold text-gray-900www mb-4 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-gray-900w mb-4 flex items-center gap-2">
           <Info className="w-5 h-5 text-yellow-500"/>
           <span className="text-2xl">Tipografía</span>
         </h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700www mb-2">
+            <label className="block text-sm font-medium text-gray-700w mb-2">
               Tamaño de Fuente
             </label>
             <select
               value={localFontSize}
               onChange={handleFontSizeChange}
-              className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-900www">
+              className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-900w">
               <option value="small">Pequeño</option>
               <option value="medium">Mediano</option>
               <option value="large">Grande</option>
@@ -671,7 +707,7 @@ const AppearancePanel = ({ theme, onThemeChange, userProfile, setUserProfile, on
 
       {/* Accessibility Settings */}
       <div className="bg-white rounded-xl p-6 border-t border-gray-200 shadow-xl">
-        <h3 className="text-lg font-semibold text-gray-900www mb-4 flex items-center gap-2">
+        <h3 className="text-lg font-semibold text-gray-900w mb-4 flex items-center gap-2">
           <Eye className="w-5 h-5 text-green-500" />
           Accesibilidad
         </h3>
@@ -679,8 +715,8 @@ const AppearancePanel = ({ theme, onThemeChange, userProfile, setUserProfile, on
           {/* High Contrast Toggle */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-gray-900www">Alto Contraste</p>
-              <p className="text-sm text-gray-600www">
+              <p className="font-medium text-gray-900w">Alto Contraste</p>
+              <p className="text-sm text-gray-600w">
                 Mejora la legibilidad para personas con dificultades visuales
               </p>
             </div>
@@ -698,8 +734,8 @@ const AppearancePanel = ({ theme, onThemeChange, userProfile, setUserProfile, on
           {/* Animations Toggle */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-gray-900www">Animaciones</p>
-              <p className="text-sm text-gray-600www">
+              <p className="font-medium text-gray-900w">Animaciones</p>
+              <p className="text-sm text-gray-600w">
                 Activa o desactiva las transiciones y animaciones
               </p>
             </div>
@@ -718,13 +754,13 @@ const AppearancePanel = ({ theme, onThemeChange, userProfile, setUserProfile, on
 
       {/* Preview Section */}
       <div className="bg-white rounded-xl p-6 border-t border-gray-200 shadow-xl">
-        <h3 className="text-lg font-semibold text-gray-900www mb-4">Vista Previa</h3>
+        <h3 className="text-lg font-semibold text-gray-900w mb-4">Vista Previa</h3>
         
         <div
           className={`p-4 rounded-lg border ${
             localHighContrast
               ? 'bg-black border-white'
-              : 'bg-gray-50 text-gray-900www border-gray-300'
+              : 'bg-gray-50 text-gray-900w border-gray-300'
           }`}
           style={{
             fontSize: localFontSize === 'small' ? '14px' :
@@ -913,21 +949,21 @@ const NotificationsPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) =
     >
       <div className="flex items-center gap-3 mb-6">
         <Bell className="w-6 h-6 text-blue-500" />
-        <h2 className="text-2xl font-bold text-gray-900ww">
+        <h2 className="text-2xl font-bold text-gray-900w">
           Notificaciones
         </h2>
       </div>
 
       {/* Notification Types */}
       <div className="bg-gray-50 rounded-xl p-6 border-t border-gray-200 shadow-xl">
-        <h3 className="text-lg font-semibold text-gray-900ww mb-4">
+        <h3 className="text-lg font-semibold text-gray-900w mb-4">
           Notificaciones Principales
         </h3>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-gray-700ww">Notificaciones</p>
-              <p className="text-sm text-gray-500ww">
+              <p className="font-medium text-gray-700w">Notificaciones</p>
+              <p className="text-sm text-gray-500w">
                 Recordatorios de estado de ánimo
               </p>
             </div>
@@ -944,8 +980,8 @@ const NotificationsPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) =
 
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-gray-700ww">Recordatorios</p>
-              <p className="text-sm text-gray-500ww">
+              <p className="font-medium text-gray-700w">Recordatorios</p>
+              <p className="text-sm text-gray-500w">
                 Alertas de medicación
               </p>
             </div>
@@ -964,14 +1000,14 @@ const NotificationsPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) =
 
       {/* Additional Notification Types */}
       <div className="bg-gray-50 rounded-xl p-6 border-t border-gray-200 shadow-xl">
-        <h3 className="text-lg font-semibold text-gray-900ww mb-4">
+        <h3 className="text-lg font-semibold text-gray-900w mb-4">
           Otras Notificaciones
         </h3>
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-gray-600ww">Recordatorios de Citas</p>
-              <p className="text-sm text-gray-400ww">
+              <p className="font-medium text-gray-600w">Recordatorios de Citas</p>
+              <p className="text-sm text-gray-400w">
                 Notifica sobre próximas citas médicas
               </p>
             </div>
@@ -988,8 +1024,8 @@ const NotificationsPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) =
 
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-gray-600ww">Recordatorios de Citas</p>
-              <p className="text-sm text-gray-400ww">
+              <p className="font-medium text-gray-600w">Recordatorios de Citas</p>
+              <p className="text-sm text-gray-400w">
                 Notifica sobre próximas citas médicas
               </p>
             </div>
@@ -1006,8 +1042,8 @@ const NotificationsPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) =
 
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-gray-600ww ">Alertas de Emergencia</p>
-              <p className="text-sm text-gray-400ww">
+              <p className="font-medium text-gray-600w ">Alertas de Emergencia</p>
+              <p className="text-sm text-gray-400w">
                 Notificaciones urgentes de crisis
               </p>
             </div>
@@ -1024,8 +1060,8 @@ const NotificationsPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) =
 
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-gray-600ww ">Actualizaciones de Progreso</p>
-              <p className="text-sm text-gray-400ww">
+              <p className="font-medium text-gray-600w ">Actualizaciones de Progreso</p>
+              <p className="text-sm text-gray-400w">
                 Resúmenes de tu progreso y mejoras
               </p>
             </div>
@@ -1042,8 +1078,8 @@ const NotificationsPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) =
 
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-gray-600ww ">Reportes Semanales</p>
-              <p className="text-sm text-gray-400ww ">
+              <p className="font-medium text-gray-600w ">Reportes Semanales</p>
+              <p className="text-sm text-gray-400w ">
                 Resumen semanal de tu bienestar
               </p>
             </div>
@@ -1060,8 +1096,8 @@ const NotificationsPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) =
 
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium text-gray-600ww">Tips Motivacionales</p>
-              <p className="text-sm text-gray-400ww ">
+              <p className="font-medium text-gray-600w">Tips Motivacionales</p>
+              <p className="text-sm text-gray-400w ">
                 Consejos diarios para tu bienestar mental
               </p>
             </div>
@@ -1080,26 +1116,26 @@ const NotificationsPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) =
 
       {/* Schedule Settings */}
       <div className="bg-gray-50 rounded-xl p-6 border-t border-gray-200 shadow-xl">
-        <h3 className="text-lg font-semibold text-gray-900wwmb-4">
+        <h3 className="text-lg font-semibold text-gray-900wmb-4">
           Horario de Notificaciones
         </h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-400ww mb-2">
+            <label className="block text-sm font-medium text-gray-400w mb-2">
               Hora Predeterminada
             </label>
             <input
               type="time"
               value={notificationTime}
               onChange={(e) => handleTimeChange('time', e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-900ww "
+              className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-900w "
             />
           </div>
 
           <div>
-            <h4 className="text-sm font-medium text-gray-700ww mb-3">Horas de Silencio</h4>
+            <h4 className="text-sm font-medium text-gray-700w mb-3">Horas de Silencio</h4>
             <div className="flex items-center justify-between mb-3">
-              <p className="text-sm text-gray-600ww">
+              <p className="text-sm text-gray-600w">
                 Activar horas de silencio
               </p>
               <label className="relative inline-flex items-center cursor-pointer">
@@ -1116,25 +1152,25 @@ const NotificationsPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) =
             {quietHours.enabled && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700wwmb-1">
+                  <label className="block text-sm font-medium text-gray-700wmb-1">
                     Desde
                   </label>
                   <input
                     type="time"
                     value={quietHours.start}
                     onChange={(e) => handleTimeChange('start', e.target.value)}
-                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900ww dark:text-white"
+                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900w "
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700ww dark:text-gray-300w mb-1">
+                  <label className="block text-sm font-medium text-gray-700w  mb-1">
                     Hasta
                   </label>
                   <input
                     type="time"
                     value={quietHours.end}
                     onChange={(e) => handleTimeChange('end', e.target.value)}
-                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900ww dark:text-white"
+                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900w "
                   />
                 </div>
               </div>
@@ -1146,7 +1182,7 @@ const NotificationsPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) =
       {/* Custom Reminders */}
       <div className="bg-gray-50 rounded-xl p-6 border-t border-gray-200 shadow-xl">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900ww">
+          <h3 className="text-lg font-semibold text-gray-900w">
             Recordatorios Personalizados
           </h3>
           <motion.button
@@ -1164,30 +1200,30 @@ const NotificationsPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) =
             <div key={reminder.id} className="bg-white rounded-lg p-4 border border-gray-200">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700ww mb-1">
+                  <label className="block text-sm font-medium text-gray-700w mb-1">
                     Título
                   </label>
                   <input
                     type="text"
                     value={reminder.title}
                     onChange={(e) => updateCustomReminder(reminder.id, 'title', e.target.value)}
-                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900ww dark:text-white"
+                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900w "
                     placeholder="Recordatorio"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700ww mb-1">
+                  <label className="block text-sm font-medium text-gray-700w mb-1">
                     Hora
                   </label>
                   <input
                     type="time"
                     value={reminder.time}
                     onChange={(e) => updateCustomReminder(reminder.id, 'time', e.target.value)}
-                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900ww dark:text-white"
+                    className="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-600 text-gray-900w "
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700ww mb-1">
+                  <label className="block text-sm font-medium text-gray-700w mb-1">
                     Días
                   </label>
                   <div className="flex gap-1">
@@ -1203,7 +1239,7 @@ const NotificationsPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) =
                         className={`w-8 h-8 rounded text-xs font-medium ${
                           reminder.days.includes(index)
                             ? 'bg-blue-500 text-white'
-                            : 'bg-gray-200 text-gray-700ww'
+                            : 'bg-gray-200 text-gray-700w'
                         }`}
                       >
                         {day}
@@ -1233,7 +1269,7 @@ const NotificationsPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) =
           ))}
           
           {notifications.customReminders.length === 0 && (
-            <p className="text-gray-500ww text-center py-4">
+            <p className="text-gray-500w text-center py-4">
               No hay recordatorios personalizados. Haz clic en "Agregar" para crear uno.
             </p>
           )}
@@ -1345,7 +1381,7 @@ const EmergencyPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) => {
     >
       <div className="flex items-center gap-3 mb-6">
         <Phone className="w-6 h-6 text-blue-500" />
-        <h2 className="text-2xl font-bold text-gray-900ww">
+        <h2 className="text-2xl font-bold text-gray-900w">
           Emergencias
         </h2>
       </div>
@@ -1354,10 +1390,10 @@ const EmergencyPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) => {
       <div className="bg-gray-50 rounded-xl p-6 border-t border-gray-200 shadow-xl">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900ww mb-2">
+            <h3 className="text-lg font-semibold text-gray-900w mb-2">
               Marcación Rápida
             </h3>
-            <p className="text-sm text-gray-600ww">
+            <p className="text-sm text-gray-600w">
               Permite acceso rápido a llamadas de emergencia desde cualquier pantalla
             </p>
           </div>
@@ -1376,7 +1412,7 @@ const EmergencyPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) => {
       {/* Emergency Contacts */}
       <div className="bg-gray-50 rounded-xl p-6 border-t border-gray-200 shadow-xl">
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900ww">
+          <h3 className="text-lg font-semibold text-gray-900w">
             Mis Contactos de Emergencia
           </h3>
           <motion.button
@@ -1397,40 +1433,40 @@ const EmergencyPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) => {
             }`}>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700ww mb-1">
+                  <label className="block text-sm font-medium text-gray-700w mb-1">
                     Nombre Completo
                   </label>
                   <input
                     type="text"
                     value={contact.name}
                     onChange={(e) => updateContact(contact.id, 'name', e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-900ww"
+                    className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-900w"
                     placeholder="Nombre del contacto"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700ww mb-1">
+                  <label className="block text-sm font-medium text-gray-700w mb-1">
                     Teléfono
                   </label>
                   <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400ww" />
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400w" />
                     <input
                       type="tel"
                       value={contact.phone}
                       onChange={(e) => updateContact(contact.id, 'phone', e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900ww"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-white text-gray-900w"
                       placeholder="+57 300 123 4567"
                     />
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700ww mb-1">
+                  <label className="block text-sm font-medium text-gray-700w mb-1">
                     Relación
                   </label>
                   <select
                     value={contact.relationship}
                     onChange={(e) => updateContact(contact.id, 'relationship', e.target.value)}
-                    className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-900ww"
+                    className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-900w"
                   >
                     <option value="">Seleccionar</option>
                     {relationships.map((rel) => (
@@ -1466,7 +1502,7 @@ const EmergencyPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) => {
                     />
                     <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[1px] after:left-[1px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-600"></div>
                   </label>
-                  <span className="text-sm text-gray-600ww">
+                  <span className="text-sm text-gray-600w">
                     {contact.isActive ? 'Activo' : 'Inactivo'}
                   </span>
                 </div>
@@ -1483,10 +1519,10 @@ const EmergencyPanel = ({ userProfile, setUserProfile, onUnsavedChanges }) => {
           {contacts.length === 0 && (
             <div className="text-center py-8">
               <Phone className="w-16 h-16 mx-auto mb-4 text-gray-300w" />
-              <h4 className="text-lg font-medium text-gray-700ww mb-2">
+              <h4 className="text-lg font-medium text-gray-700w mb-2">
                 No hay contactos de emergencia
               </h4>
-              <p className="text-gray-500ww mb-4">
+              <p className="text-gray-500w mb-4">
                 Agrega al menos un contacto de emergencia para poder contactarte rápidamente en caso de necesidad.
               </p>
               <motion.button
@@ -1558,6 +1594,76 @@ const SettingsPanel = ({
   const [activeSection, setActiveSection] = useState('profile');
   const [expandedSections, setExpandedSections] = useState({});
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  const handleLogout = async () => {
+    if (hasUnsavedChanges) {
+      const confirmLogout = window.confirm('¿Tienes cambios sin guardar. ¿Deseas cerrar sesión de todos modos?');
+      if (!confirmLogout) return;
+    }
+
+    // Send data to user's email or phone before logout
+    const userData = {
+      profile: userProfile,
+      moodEntries: moodEntries,
+      exportDate: new Date().toISOString(),
+      dataTypes: [
+        'Información personal y diagnóstico',
+        'Historial de estados de ánimo',
+        'Entradas de diario',
+        'Configuración y preferencias',
+        'Contactos de emergencia',
+        'Registro de medicación',
+        'Estadísticas de uso'
+      ]
+    };
+
+    const dataStr = JSON.stringify(userData, null, 2);
+
+    if (userProfile.email) {
+      try {
+        await emailjs.send(
+          'service_psicomed', // Replace with your EmailJS service ID
+          'template_data_export', // Replace with your EmailJS template ID
+          {
+            to_email: userProfile.email,
+            user_name: userProfile.name,
+            data: dataStr,
+            export_date: new Date().toLocaleDateString()
+          },
+          'your_public_key' // Replace with your EmailJS public key
+        );
+        alert('📧 Datos enviados a tu correo antes de cerrar sesión.');
+      } catch (error) {
+        console.error('Error sending email:', error);
+        alert('Error al enviar datos por email, pero cerrando sesión.');
+      }
+    } else if (userProfile.phone) {
+      const smsBody = `PsicoMed Data Export\n\n${dataStr.substring(0, 1000)}...`;
+      window.open(`sms:${userProfile.phone}?body=${encodeURIComponent(smsBody)}`, '_blank');
+      alert('📱 Datos enviados via SMS antes de cerrar sesión.');
+    }
+
+    try {
+      await signOut(auth);
+      // Clear user profile
+      setUserProfile({
+        name: 'Usuario',
+        age: 25,
+        country: 'Colombia',
+        diagnosis: 'Ansiedad',
+        language: 'es',
+        notifications: true,
+        reminders: true,
+        reminderTime: '09:00',
+        isPremium: false
+      });
+      // Navigate to welcome screen
+      navigate('/');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      alert('Error al cerrar sesión. Inténtalo de nuevo.');
+    }
+  };
 
   const sections = [
     {
@@ -1644,10 +1750,10 @@ const SettingsPanel = ({
               <ArrowLeft className="w-5 h-5" />
             </motion.button>
             <div>
-              <h1 className="text-3xl font-bold text-gray-800ww">
+              <h1 className="text-3xl font-bold text-gray-800w">
                 Configuración
               </h1>
-              <p className="text-gray-600ww">
+              <p className="text-gray-600w">
                 Personaliza tu experiencia en PSICOMED
               </p>
             </div>
@@ -1676,8 +1782,8 @@ const SettingsPanel = ({
                   <Settings className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900ww">Configuración</h3>
-                  <p className="text-sm text-gray-500ww">Personaliza tu experiencia</p>
+                  <h3 className="text-lg font-bold text-gray-900w">Configuración</h3>
+                  <p className="text-sm text-gray-500w">Personaliza tu experiencia</p>
                 </div>
               </div>
             </div> 
@@ -1699,7 +1805,7 @@ const SettingsPanel = ({
                     className={`group w-full p-3 rounded-2xl text-left transition-all duration-300 relative overflow-hidden ${
                       isActive
                         ? 'bg-gradient-to-r from-blue-500 to-purple-600 shadow-xl shadow-blue-500/25'
-                        : 'hover:bg-white text-gray-700ww hover:shadow-lg border border-transparent hover:border-gray-200'
+                        : 'hover:bg-white text-gray-700w hover:shadow-lg border border-transparent hover:border-gray-200'
                     }`}
                   >
                     {/* Active indicator */}
@@ -1711,19 +1817,19 @@ const SettingsPanel = ({
                       <div className={`p-2 rounded-xl transition-all duration-300 ${
                         isActive
                           ? 'bg-white/20 text-white'
-                          : 'bg-gray-100  text-gray-600ww group-hover:bg-blue-100 group-hover:text-blue-600 dark:group-hover:bg-gray-600 dark:group-hover:text-blue-400'
+                          : 'bg-gray-100  text-gray-600w group-hover:bg-blue-100 group-hover:text-blue-600 dark:group-hover:bg-gray-600 dark:group-hover:text-blue-400'
                       }`}>
                         <Icon className="w-5 h-5" />
                       </div>
                       
                       <div className="flex-1 min-w-0">
                         <div className={`font-semibold text-sm leading-tight ${
-                          isActive ? 'text-white' : 'text-gray-900ww '
+                          isActive ? 'text-white' : 'text-gray-900w '
                         }`}>
                           {section.title}
                         </div>
                         <div className={`text-xs mt-0.5 leading-relaxed ${
-                          isActive ? 'text-blue-100' : 'text-gray-500ww dark:text-gray-400ww'
+                          isActive ? 'text-blue-100' : 'text-gray-500w dark:text-gray-400w'
                         }`}>
                           {section.description}
                         </div>
@@ -1732,7 +1838,7 @@ const SettingsPanel = ({
                       <ChevronRight className={`w-4 h-4 transition-all duration-300 ${
                         isActive
                           ? 'text-white rotate-90'
-                          : 'text-gray-400ww group-hover:text-gray-600ww dark:group-hover:text-gray-300w group-hover:translate-x-1'
+                          : 'text-gray-400w group-hover:text-gray-600w dark:group-hover:text-gray-300w group-hover:translate-x-1'
                       }`} />
                     </div>
 
@@ -1745,19 +1851,21 @@ const SettingsPanel = ({
               })}
             </nav>
 
-            {/* Sidebar Footer */}
+            {/* Sidebar Footer - Logout Button */}
             <div className="mt-6 pt-4 border-t border-gray-200">
-              <div className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-700 rounded-2xl p-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-green-400 to-blue-500 rounded-2xl flex items-center justify-center">
-                    <CheckCircle className="w-4 h-4 " />
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900ww ">Configuración guardada</p>
-                    <p className="text-xs text-gray-500ww">Todos los cambios están seguros</p>
-                  </div>
-                </div>
-              </div>
+              <motion.button
+                onClick={handleLogout}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className={`w-full p-4 rounded-2xl font-medium text-white flex items-center gap-3 transition-colors duration-300 ${
+                  hasUnsavedChanges
+                    ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700'
+                    : 'bg-gradient-to-r from-gray-500 to-gray-600 hover:from-red-600 hover:to-red-700'
+                }`}
+              >
+                <LogOut className="w-5 h-5" />
+                <span>Cerrar Sesión</span>
+              </motion.button>
             </div>
           </div>
 
