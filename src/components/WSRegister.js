@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Lock, User, Calendar, MapPin, Stethoscope, Globe, Eye, EyeOff, AlertTriangle } from 'lucide-react';
+import { Mail, Lock, User, Calendar, MapPin, Stethoscope, Globe, Eye, EyeOff, AlertTriangle, Phone } from 'lucide-react';
 import { auth, googleProvider } from '../firebase';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithPopup, RecaptchaVerifier, signInWithPhoneNumber } from 'firebase/auth';
 import { useNavigate } from 'react-router-dom';
 
 const WSRegister = ({ setUserProfile }) => {
@@ -18,10 +18,29 @@ const WSRegister = ({ setUserProfile }) => {
     age: '',
     country: '',
     diagnosis: '',
-    language: 'es'
+    language: 'es',
+    phoneNumber: '',
+    verificationCode: ''
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showPhoneVerification, setShowPhoneVerification] = useState(false);
+  const [confirmationResult, setConfirmationResult] = useState(null);
+
+  // Setup reCAPTCHA
+  useEffect(() => {
+    if (auth && !window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+        callback: (response) => {
+          console.log('reCAPTCHA solved');
+        },
+        'expired-callback': () => {
+          console.log('reCAPTCHA expired');
+        }
+      });
+    }
+  }, [auth]);
 
   // Check if Firebase is configured
   if (!auth) {
@@ -140,6 +159,67 @@ const WSRegister = ({ setUserProfile }) => {
     } catch (error) {
       console.error('Google auth error:', error);
       setError(error.message);
+    }
+    setLoading(false);
+  };
+
+  const handleSendSMS = async () => {
+    if (!formData.phoneNumber) {
+      setError('Ingresa un número de teléfono');
+      return;
+    }
+
+    setError('');
+    setLoading(true);
+
+    try {
+      const phoneNumber = formData.phoneNumber.startsWith('+') ? formData.phoneNumber : `+57${formData.phoneNumber}`;
+      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
+      setConfirmationResult(confirmation);
+      setShowPhoneVerification(true);
+    } catch (error) {
+      console.error('SMS error:', error);
+      setError(error.message);
+      // Reset reCAPTCHA on error
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = null;
+      }
+    }
+    setLoading(false);
+  };
+
+  const handleVerifyCode = async () => {
+    if (!formData.verificationCode) {
+      setError('Ingresa el código de verificación');
+      return;
+    }
+
+    setError('');
+    setLoading(true);
+
+    try {
+      const result = await confirmationResult.confirm(formData.verificationCode);
+      const user = result.user;
+
+      const profile = {
+        name: user.displayName || 'Usuario',
+        email: user.email || '',
+        phone: user.phoneNumber,
+        age: 25,
+        country: 'Colombia',
+        diagnosis: 'Ansiedad',
+        language: 'es',
+        notifications: true,
+        reminders: true,
+        reminderTime: '09:00',
+        isPremium: false
+      };
+      setUserProfile(profile);
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Verification error:', error);
+      setError('Código incorrecto');
     }
     setLoading(false);
   };
@@ -323,6 +403,34 @@ const WSRegister = ({ setUserProfile }) => {
           </div>
         )}
 
+        {/* Phone Number */}
+        <div className="relative">
+          <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="tel"
+            name="phoneNumber"
+            placeholder="Número de teléfono (+57...)"
+            value={formData.phoneNumber}
+            onChange={handleInputChange}
+            className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+          />
+        </div>
+
+        {/* Verification Code (only when SMS sent) */}
+        {showPhoneVerification && (
+          <div className="relative">
+            <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <input
+              type="text"
+              name="verificationCode"
+              placeholder="Código de verificación"
+              value={formData.verificationCode}
+              onChange={handleInputChange}
+              className="w-full pl-12 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
+            />
+          </div>
+        )}
+
         {/* Error Message */}
         {error && (
           <div className="text-red-500 text-sm text-center bg-red-50 p-3 rounded-xl">
@@ -331,15 +439,40 @@ const WSRegister = ({ setUserProfile }) => {
         )}
 
         {/* Submit Button */}
-        <motion.button
-          type="submit"
-          disabled={loading}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
-        >
-          {loading ? 'Cargando...' : (isLogin ? 'Iniciar Sesión' : 'Registrarse')}
-        </motion.button>
+        {!showPhoneVerification ? (
+          <motion.button
+            type="submit"
+            disabled={loading}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+          >
+            {loading ? 'Cargando...' : (isLogin ? 'Iniciar Sesión' : 'Registrarse')}
+          </motion.button>
+        ) : (
+          <motion.button
+            onClick={handleVerifyCode}
+            disabled={loading}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="w-full bg-gradient-to-r from-green-500 to-teal-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+          >
+            {loading ? 'Verificando...' : 'Verificar Código'}
+          </motion.button>
+        )}
+
+        {/* Send SMS Button */}
+        {formData.phoneNumber && !showPhoneVerification && (
+          <motion.button
+            onClick={handleSendSMS}
+            disabled={loading}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="w-full bg-gradient-to-r from-orange-500 to-red-600 text-white font-bold py-3 px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 disabled:opacity-50"
+          >
+            {loading ? 'Enviando SMS...' : 'Enviar Código por SMS'}
+          </motion.button>
+        )}
       </form>
 
       {/* Divider */}
@@ -365,6 +498,9 @@ const WSRegister = ({ setUserProfile }) => {
         </svg>
         Continuar con Google
       </motion.button>
+
+      {/* reCAPTCHA container */}
+      <div id="recaptcha-container"></div>
     </motion.div>
   );
 };
